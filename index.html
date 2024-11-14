@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech App with Highlighting</title>
+    <style>
+        .highlight {
+            background-color: yellow;
+            color: black;
+        }
+        #highlighted-text {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Text-to-Speech with Highlighting</h1>
+
+    <textarea id="text-to-speak" rows="4" cols="50" placeholder="Enter text to speak..."></textarea><br>
+    <button onclick="speakText()">Speak</button><br>
+    
+    <p id="highlighted-text" onclick="saySelectedWord(event)"></p>
+
+    <script>
+        let words = [];
+        let currentWordIndex = 0;
+
+        function speakText() {
+            const text = document.getElementById("text-to-speak").value;
+            if (text) {
+                words = text.split(' ');
+                currentWordIndex = 0;
+                updateHighlightedText();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.onboundary = function(event) {
+                    if (event.name === 'word') {
+                        currentWordIndex = getWordIndexAtChar(event.charIndex);
+                        updateHighlightedText();
+                    }
+                };
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function updateHighlightedText() {
+            const highlightedText = words.map((word, index) =>
+                index === currentWordIndex ? `<span class="highlight">${word}</span>` : word
+            ).join(' ');
+            document.getElementById('highlighted-text').innerHTML = highlightedText;
+        }
+
+        function getWordIndexAtChar(charIndex) {
+            let totalChars = 0;
+            for (let i = 0; i < words.length; i++) {
+                totalChars += words[i].length + 1;  // Account for spaces
+                if (charIndex < totalChars) return i;
+            }
+            return words.length - 1;
+        }
+
+        // Function to handle click event and speak the selected word
+        function saySelectedWord(event) {
+            const selectedText = window.getSelection().toString().trim();
+            if (selectedText) {
+                const utterance = new SpeechSynthesisUtterance(selectedText);
+                speechSynthesis.speak(utterance);
+            }
+        }
+    </script>
+</body>
+</html>
